@@ -1,0 +1,32 @@
+# %%
+import numpy as np
+import os
+import SimpleITK as sitk
+import pandas as pd
+from pathlib import Path
+import glob
+import utils  
+# %%
+main_folder = '/data/blobfuse/hecktor2022/imagesTr'
+# ct_paths = sorted(list(Path(main_folder.joinpath('ct')).rglob("*.nii.gz")))
+# pt_paths = sorted(list(Path(main_folder.joinpath('pt')).rglob("*.nii.gz")))
+ct_paths = sorted(glob.glob(os.path.join(main_folder, '*CT.nii.gz')))
+pt_paths = sorted(glob.glob(os.path.join(main_folder, '*PT.nii.gz')))
+resampled_ct_dir = main_folder + 'ct_resampled/' 
+# %%
+path_data = np.column_stack((ct_paths, pt_paths))
+# %%
+for dat in path_data:
+    ctpath, ptpath = dat
+    ctimg = sitk.ReadImage(ctpath, imageIO="NiftiImageIO")
+    ptimg = sitk.ReadImage(ptpath, imageIO="NiftiImageIO")  
+    resampled_ctimg = sitk.Resample(ctimg, ptimg, defaultPixelValue=-1000)
+
+    info = os.path.basename(ptpath).split('_')
+    filename = info[0] + '_' + info[1]
+
+    sitk.WriteImage(resampled_ctimg, resampled_ct_dir + filename+'_ct.nii.gz')
+    print(f'Done with patient {info[0]}: studydate {info[1]}')
+
+
+# %%
