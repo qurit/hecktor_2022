@@ -168,14 +168,14 @@ def get_clinical_orientation(array2d, cross_section='axial'):
     
 # takes a 3D nii image and list of slice IDs and saves the corresponding 2D nii images into 
 # dest_folder
-def save_selected_slices(array3d, disease, center, patientID, caseID, selected_slices, dest_folder, cross_section='coronal'):
+def save_selected_slices(array3d, patientID, caseID, slicetype, selected_slices, dest_folder, cross_section='coronal'):
 
     if cross_section == 'sagittal':
         for i in range(len(selected_slices)):
             array2d = array3d[selected_slices[i],:,:]
             array2d_rotated = get_clinical_orientation(array2d, cross_section='sagittal')
             img = nib.Nifti1Image(array2d_rotated, affine=np.eye(4))
-            save_filename = dest_folder.joinpath(disease + '_' + center + '_' + patientID + '_' + caseID + '_' + convert_to_3_digits(selected_slices[i]) + '_sg.nii' )
+            save_filename = os.path.join(dest_folder, patientID + '_' + caseID + '_' + convert_to_3_digits(selected_slices[i]) + '_sg_' + slicetype +'.nii.gz' )
             nib.save(img, save_filename)
                 
     
@@ -184,7 +184,7 @@ def save_selected_slices(array3d, disease, center, patientID, caseID, selected_s
             array2d = array3d[:,selected_slices[i],:]
             array2d_rotated = get_clinical_orientation(array2d, cross_section='coronal')
             img = nib.Nifti1Image(array2d_rotated, affine=np.eye(4))
-            save_filename = dest_folder.joinpath(disease + '_' + center + '_' + patientID + '_' + caseID + '_' + convert_to_3_digits(selected_slices[i]) + '_co.nii' )
+            save_filename = os.path.join(dest_folder, patientID + '_' + caseID + '_' + convert_to_3_digits(selected_slices[i]) + '_co_' + slicetype +'.nii.gz' )
             nib.save(img, save_filename)
          
     elif cross_section == 'axial':
@@ -192,10 +192,37 @@ def save_selected_slices(array3d, disease, center, patientID, caseID, selected_s
             array2d = array3d[:,:,selected_slices[i]]
             array2d_rotated = get_clinical_orientation(array2d, cross_section='axial')
             img = nib.Nifti1Image(array2d_rotated, affine=np.eye(4))
-            save_filename = dest_folder.joinpath(disease + '_' + center + '_' + patientID + '_' + caseID + '_' + convert_to_3_digits(selected_slices[i]) + '_ax.nii' )
+            save_filename = os.path.join(dest_folder, patientID + '_' + caseID + '_' + convert_to_3_digits(selected_slices[i]) + '_ax_' + slicetype + '.nii.gz' )
             nib.save(img, save_filename)
 
+# save selected slices for hecktor images as they follow another filenaming system different from my own
+def save_selected_slices_hecktor(array3d, patientID, slicetype, selected_slices, dest_folder, cross_section='coronal'):
 
+    if cross_section == 'sagittal':
+        for i in range(len(selected_slices)):
+            array2d = array3d[selected_slices[i],:,:]
+            array2d_rotated = get_clinical_orientation(array2d, cross_section='sagittal')
+            img = nib.Nifti1Image(array2d_rotated, affine=np.eye(4))
+            save_filename = os.path.join(dest_folder, patientID + '_' + convert_to_3_digits(selected_slices[i]) + '_sg_' + slicetype +'.nii.gz' )
+            nib.save(img, save_filename)
+                
+    
+    elif cross_section == 'coronal':
+        for i in range(len(selected_slices)):
+            array2d = array3d[:,selected_slices[i],:]
+            array2d_rotated = get_clinical_orientation(array2d, cross_section='coronal')
+            img = nib.Nifti1Image(array2d_rotated, affine=np.eye(4))
+            save_filename = os.path.join(dest_folder, patientID + '_' + convert_to_3_digits(selected_slices[i]) + '_co_' + slicetype +'.nii.gz' )
+            nib.save(img, save_filename)
+         
+    elif cross_section == 'axial':
+        for i in range(len(selected_slices)):
+            array2d = array3d[:,:,selected_slices[i]]
+            array2d_rotated = get_clinical_orientation(array2d, cross_section='axial')
+            img = nib.Nifti1Image(array2d_rotated, affine=np.eye(4))
+            save_filename = os.path.join(dest_folder, patientID + '_' + convert_to_3_digits(selected_slices[i]) + '_ax_' + slicetype + '.nii.gz' )
+            nib.save(img, save_filename)
+            
 # get a 1D array containing all the non-zero elements of a 2D array
 def get_non_zero_elements_array(array2d):
     array1d = array2d.flatten()
@@ -244,7 +271,7 @@ def z_score_norm_nonzero_pixel(filepath, dest_folder=''):
 
 # takes a 2D nii file and converts it to jpg
 def nii2jpg(filepath, dest_folder=''):
-    fileID = filepath.replace(os.path.dirname(filepath)+'/', '')[:-4]
+    fileID = os.path.basename(filepath)[:-4]
     data, voxdim = nib2numpy(filepath)
     _slice = data
     slice = (_slice.astype(np.float64)-_slice.min()) / (_slice.max()-_slice.min())
