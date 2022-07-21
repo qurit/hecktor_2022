@@ -23,7 +23,7 @@ ptfg_dir = os.path.join(train_axial_dir, 'pt_fg')
 ptbg_dir = os.path.join(train_axial_dir, 'pt_bg')
 gtfg_dir = os.path.join(train_axial_dir, 'gt_fg')
 gtbg_dir = os.path.join(train_axial_dir, 'gt_bg')
-
+# testing pushing from another location
 # ctfg_paths = sorted(glob.glob(os.path.join(ctfg_dir, '*.nii.gz')))
 # ctbg_paths = sorted(glob.glob(os.path.join(ctbg_dir, '*.nii.gz')))
 # ptfg_paths = sorted(glob.glob(os.path.join(ptfg_dir, '*.nii.gz')))
@@ -161,6 +161,7 @@ dice_agg_1 = np.sum(np.array(intersections_1))/np.sum(np.array(unions_1))
 dice_agg_2 = np.sum(np.array(intersections_2))/np.sum(np.array(unions_2))
 dice_agg_avg = (dice_agg_1 + dice_agg_2)/2.0
 
+print(dice_agg_avg)     
 print(dice_agg_avg)
 #%% take dice score of prediction and target
 # %%
