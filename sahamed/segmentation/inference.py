@@ -23,7 +23,7 @@ ptfg_dir = os.path.join(train_axial_dir, 'pt_fg')
 ptbg_dir = os.path.join(train_axial_dir, 'pt_bg')
 gtfg_dir = os.path.join(train_axial_dir, 'gt_fg')
 gtbg_dir = os.path.join(train_axial_dir, 'gt_bg')
-
+# testing pushing from another location
 # ctfg_paths = sorted(glob.glob(os.path.join(ctfg_dir, '*.nii.gz')))
 # ctbg_paths = sorted(glob.glob(os.path.join(ctbg_dir, '*.nii.gz')))
 # ptfg_paths = sorted(glob.glob(os.path.join(ptfg_dir, '*.nii.gz')))
