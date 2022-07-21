@@ -23,5 +23,5 @@ val = config.validationlogfilename
 
 trndata = pd.read_csv(trn)
 valdata = pd.read_csv(val)
-plot_training_validation_metrics(trndata['loss'], valdata['loss'])
+plot_training_validation_metrics(trndata['loss'][10:], valdata['loss'][10:])
 # %%

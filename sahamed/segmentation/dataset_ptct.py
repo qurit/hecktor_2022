@@ -101,7 +101,7 @@ class LesionBackgroundDatasetPTCT(Dataset):
         # Typecasting
         x, y = torch.from_numpy(x).type(self.inputs_dtype), torch.from_numpy(y).type(self.targets_dtype)
       
-        return x.to(config.DEVICE), y.to(config.DEVICE)
+        return x, y
 
 
 

@@ -15,10 +15,10 @@ from trainer import Trainer
 from dataset_ptct import LesionBackgroundDatasetPTCT
 import segmentation_models_pytorch as smp
 from segmentation_models_pytorch.losses import DiceLoss
-
-
+import torch.nn as nn
 
 #%%
+
 train_axial_dir = '/data/blobfuse/hecktor2022/resampledCTPTGT/train/axial_data/'
 ctfg_dir = os.path.join(train_axial_dir, 'ct_fg')
 ctbg_dir = os.path.join(train_axial_dir, 'ct_bg')
@@ -41,12 +41,13 @@ gtbg_paths = sorted(glob.glob(os.path.join(gtbg_dir, '*.nii.gz')))
 # gtfg_paths = sorted(glob.glob(os.path.join(gtfg_dir, '*.nii.gz')))[:10]
 # gtbg_paths = sorted(glob.glob(os.path.join(gtbg_dir, '*.nii.gz')))[:100]
 
+#%%
 ct_paths = ctfg_paths + ctbg_paths
 pt_paths = ptfg_paths + ptbg_paths
 gt_paths = gtfg_paths + gtbg_paths
 
 
-# %%
+#%%
 random_seed = 42
 train_size = 0.8
 
@@ -61,7 +62,7 @@ inputs_ptct_train, inputs_ptct_valid, targets_train, targets_valid = train_test_
     )
 
 
-# %%
+#%%
 inputs_pt_train, inputs_ct_train = inputs_ptct_train[:,0], inputs_ptct_train[:,1]
 inputs_pt_valid, inputs_ct_valid = inputs_ptct_valid[:,0], inputs_ptct_valid[:,1]
 dataset_train = LesionBackgroundDatasetPTCT(inputs_pt_train,inputs_ct_train, targets_train)#, transform=transforms)
@@ -70,43 +71,56 @@ dataset_valid = LesionBackgroundDatasetPTCT(inputs_pt_valid, inputs_ct_valid, ta
 # dataset_valid = LesionBackgroundDatasetPTCT(inputs_pt_valid[:75], inputs_ct_valid[:75], targets_valid[:75])#, transform=transforms)
 
 #%%
-dataloader_training = DataLoader(dataset=dataset_train, batch_size=256, shuffle=True)
-dataloader_validation = DataLoader(dataset=dataset_valid, batch_size=256, shuffle=True)
+dataloader_training = DataLoader(dataset=dataset_train, batch_size=512, shuffle=True, pin_memory=True, num_workers=24)
+dataloader_validation = DataLoader(dataset=dataset_valid, batch_size=512, shuffle=True, pin_memory=True, num_workers=24)
 
-#%%
+#
 # get model
-
+#%%
 model = smp.Unet(
     encoder_name="resnet34",        
     encoder_weights="imagenet",     
     in_channels=3,                 
     classes=3,                 
-).to(config.DEVICE)
-# %%
+).to(config.MAIN_DEVICE)
+# 
 
-# %%
+# model = smp.UnetPlusPlus(
+#     encoder_name='resnet34',
+#     encoder_weights="imagenet",   
+#     in_channels=3, 
+#     classes=3,
+# ).to(config.MAIN_DEVICE)
+
+model = nn.DataParallel(model, device_ids=[0,1,2,3])
+
+#%%
 criterion = DiceLoss(mode='multiclass')
 optimizer = torch.optim.Adam(model.parameters(), lr = 0.001)
 # %%
 # trainer
+import time 
+starttime = time.time()
 trainer = Trainer(model=model,
-                  device=config.DEVICE,
-                  criterion=criterion,
-                  optimizer=optimizer,
-                  training_DataLoader=dataloader_training,
-                  validation_DataLoader=dataloader_validation,
-                  lr_scheduler=None,
-                  epochs=100,
-                  epoch=0,
-                  notebook=False)
+                device=config.MAIN_DEVICE,
+                criterion=criterion,
+                optimizer=optimizer,
+                training_DataLoader=dataloader_training,
+                validation_DataLoader=dataloader_validation,
+                lr_scheduler=None,
+                epochs=200,
+                epoch=0,
+                notebook=False)
 
 #%%
 training_losses, validation_losses, lr_rates = trainer.run_trainer()
+#%%
+elapsed = time.time() - starttime
+# time_taken.append(elapsed)
+print(f"time taken: {elapsed} seconds")
 
 # %%
-# max_labels = []
-# for (x,y) in dataset_train:
-#     max_labels.append(np.unique(y.cpu()))
-# # %%
-# plt.hist(max_labels)
+
+# plt.plot(nw_values, time_taken)
+# plt.show()
 # %%
