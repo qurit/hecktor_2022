@@ -161,6 +161,7 @@ dice_agg_1 = np.sum(np.array(intersections_1))/np.sum(np.array(unions_1))
 dice_agg_2 = np.sum(np.array(intersections_2))/np.sum(np.array(unions_2))
 dice_agg_avg = (dice_agg_1 + dice_agg_2)/2.0
 
+print(dice_agg_avg)     
 print(dice_agg_avg)
 #%% take dice score of prediction and target
 # %%
