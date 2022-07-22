@@ -21,7 +21,9 @@ def plot_training_validation_metrics(trn_metrics, val_metrics):
 trn = config.traininglogfilename
 val = config.validationlogfilename
 
-trndata = pd.read_csv(trn)
-valdata = pd.read_csv(val)
+val1 = 'validlog_unet_resnet34enc_diceloss.csv'
+val2 = 'validlog_unet_resnet34enc_diceloss_ct500clip.csv'
+trndata = pd.read_csv(val1)
+valdata = pd.read_csv(val2)
 plot_training_validation_metrics(trndata['loss'][10:], valdata['loss'][10:])
 # %%

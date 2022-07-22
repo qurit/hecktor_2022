@@ -92,7 +92,7 @@ model = smp.Unet(
 #     classes=3,
 # ).to(config.MAIN_DEVICE)
 
-model = nn.DataParallel(model, device_ids=[0,1,2,3])
+model = nn.DataParallel(model, device_ids=config.ALL_DEVICE_IDS)
 
 #%%
 criterion = DiceLoss(mode='multiclass')

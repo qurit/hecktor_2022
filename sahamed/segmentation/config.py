@@ -2,7 +2,8 @@ import os
 
 # DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 MAIN_DEVICE = 'cuda:0'
-experiment_code = 'unet_resnet34enc_diceloss'
+ALL_DEVICE_IDS = [0,1]
+experiment_code = 'unet_resnet34enc_diceloss_ct500clip'
 mindim_x = 128
 mindim_y = 128
 SAVE_MODEL_ROOT = '/data/blobfuse/saved_models_hecktor/segmentation'

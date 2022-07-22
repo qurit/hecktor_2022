@@ -15,6 +15,7 @@ from torchsummary import summary
 from dataset_ptct import LesionBackgroundDatasetPTCT
 import segmentation_models_pytorch as smp
 from segmentation_models_pytorch.losses import DiceLoss
+import torch.nn as nn
 #%%
 train_axial_dir = '/data/blobfuse/hecktor2022/resampledCTPTGT/test/axial_data/'
 ctfg_dir = os.path.join(train_axial_dir, 'ct_fg')
@@ -31,12 +32,12 @@ gtbg_dir = os.path.join(train_axial_dir, 'gt_bg')
 # gtfg_paths = sorted(glob.glob(os.path.join(gtfg_dir, '*.nii.gz')))
 # gtbg_paths = sorted(glob.glob(os.path.join(gtbg_dir, '*.nii.gz')))
 
-ctfg_paths = sorted(glob.glob(os.path.join(ctfg_dir, '*.nii.gz')))[:10]
-ctbg_paths = sorted(glob.glob(os.path.join(ctbg_dir, '*.nii.gz')))[:100]
-ptfg_paths = sorted(glob.glob(os.path.join(ptfg_dir, '*.nii.gz')))[:10]
-ptbg_paths = sorted(glob.glob(os.path.join(ptbg_dir, '*.nii.gz')))[:100]
-gtfg_paths = sorted(glob.glob(os.path.join(gtfg_dir, '*.nii.gz')))[:10]
-gtbg_paths = sorted(glob.glob(os.path.join(gtbg_dir, '*.nii.gz')))[:100]
+ctfg_paths = sorted(glob.glob(os.path.join(ctfg_dir, '*.nii.gz')))
+ctbg_paths = sorted(glob.glob(os.path.join(ctbg_dir, '*.nii.gz')))
+ptfg_paths = sorted(glob.glob(os.path.join(ptfg_dir, '*.nii.gz')))
+ptbg_paths = sorted(glob.glob(os.path.join(ptbg_dir, '*.nii.gz')))
+gtfg_paths = sorted(glob.glob(os.path.join(gtfg_dir, '*.nii.gz')))
+gtbg_paths = sorted(glob.glob(os.path.join(gtbg_dir, '*.nii.gz')))
 
 ct_paths = ctfg_paths + ctbg_paths
 pt_paths = ptfg_paths + ptbg_paths
@@ -50,7 +51,7 @@ targets = gt_paths
 dataset_test = LesionBackgroundDatasetPTCT(inputs_pt,inputs_ct, targets) 
                                    
 
-dataloader_test = data.DataLoader(dataset=dataset_test,batch_size=1, shuffle=False)
+dataloader_test = data.DataLoader(dataset=dataset_test, batch_size=1, shuffle=False, pin_memory=True, num_workers=24)
 
 ImageIDs = []
 for path in targets:
@@ -65,10 +66,12 @@ model = smp.Unet(
     encoder_weights="imagenet",     
     in_channels=3,                 
     classes=3,                 
-).to(config.DEVICE)
+).to(config.MAIN_DEVICE)
+model = nn.DataParallel(model, device_ids=[0,1,2,3])
 
 #%%
-saved_model_path = os.path.join('/data/blobfuse/saved_models_hecktor/segmentation/saved_models_unet_diceloss_smalldataoverfit', 'segmentation_ep=500.pth')
+optimal_model_name = 'segmentation_ep=170.pth'
+saved_model_path = os.path.join(config.SAVE_MODEL_DIR, optimal_model_name)
 model.load_state_dict(torch.load(saved_model_path))
 
 #%%
@@ -142,8 +145,18 @@ unions_2 = []
 # HausdorffDistance = []
 # jaccard_score = []
 #%%
+count = 0
 for i, (x, y) in enumerate(dataloader_test):
-    prediction, target = predict(x, y, model, postprocess_prediction, postprocess_target, config.DEVICE)
+    prediction, target = predict(x, y, model, postprocess_prediction, postprocess_target, config.MAIN_DEVICE)
+
+    if len(np.nonzero(target)) != 0:
+        fig, ax = plt.subplots(1,2)
+        fig.patch.set_facecolor('white')
+        fig.patch.set_alpha(0.7) 
+
+        ax[0].imshow(target)
+        ax[1].imshow(prediction)
+        plt.show()
 
     int1 = compute_intersection(prediction, target, 1)
     uni1 = compute_union(prediction, target, 1)
@@ -154,6 +167,8 @@ for i, (x, y) in enumerate(dataloader_test):
     uni2 = compute_union(prediction, target, 2)
     intersections_2.append(int2)
     unions_2.append(uni2)
+    print("Done with", ImageIDs[count])
+    count += 1
 
 
 #%%
@@ -165,5 +180,25 @@ print(dice_agg_avg)
 print(dice_agg_avg)
 #%% take dice score of prediction and target
 # %%
+
+# %%
+import pandas as pd
+all_inference = np.column_stack((ImageIDs, intersections_1, unions_1, intersections_2, unions_2))
+all_inf_df = pd.DataFrame(data=all_inference, columns=['ImageID', 'Int1', 'Uni1', 'Int2', 'Uni2'])
+all_inf_df.to_csv('inference_unet_resnet34enc_diceloss_tfe200.csv')
+# %%
+import pandas as pd
+import numpy as np
+all_inf_df = pd.read_csv('inference_unet_resnet34enc_diceloss_tfe200.csv')
+fgslice_df = all_inf_df[0:2179]
+
+int1 = fgslice_df['Int1'].values.astype(int)
+uni1 = fgslice_df['Uni1'].values.astype(int)
+int2 = fgslice_df['Int2'].values.astype(int)
+uni2 = fgslice_df['Uni2'].values.astype(int)
+
+# %%
+dsc_agg_1 = 2*np.sum(int1)/np.sum(uni1)
+dsc_agg_2 = 2*np.sum(int2)/np.sum(uni2)
 
 # %%
