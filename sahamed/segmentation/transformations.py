@@ -8,7 +8,6 @@ from skimage.util import crop
 import torch.nn.functional as F
 from torchvision.transforms import Resize, InterpolationMode
 from skimage.transform import resize
-from config import mindim_x, mindim_y
 
 def normalize_01(inp):
     """Squash image input to the value range [0, 1] (no clipping)"""
@@ -82,23 +81,22 @@ def random_flip(inp: np.ndarray, tar: np.ndarray, ndim_spatial: int):
 #     return inp_padded
 
 
-# def resize_tensor_bilinear(inp):
-#     # order = 1 (default) for Bilinear interpolation
-#     inp_resized = resize(
-#         inp,
-#         output_shape=(mindim_x, mindim_y, mindim_z), 
-#         order = 1, 
-#         mode = 'constant', 
-#         cval=0, 
-#     )
-#     return inp_resized
-    
+def resize_3dtensor_bilinear(inp, dim_x, dim_y, dim_z):
+    # order = 1 (default) for Bilinear interpolation
+    inp_resized = resize(
+        inp,
+        output_shape=(dim_x, dim_y, dim_z), 
+        order = 1, 
+        mode = 'constant', 
+        cval=0, 
+    )
+    return inp_resized
 
-def resize_2dtensor_nearest(inp):
+def resize_3dtensor_nearest(inp, dim_x, dim_y, dim_z):
     # order = 0 for Nearest neighbour interpolation
     inp_resized = resize(
         inp,
-        output_shape=(mindim_x, mindim_y), 
+        output_shape=(dim_x, dim_y, dim_z), 
         order = 0, 
         mode = 'constant', 
         cval=0, 
@@ -108,11 +106,13 @@ def resize_2dtensor_nearest(inp):
 
     return inp_resized
 
-def resize_2dtensor_bilinear(inp):
+
+
+def resize_2dtensor_bilinear(inp, dim_x, dim_y):
     # order = 1 (default) for Bilinear interpolation
     inp_resized = resize(
         inp,
-        output_shape=(mindim_x, mindim_y), 
+        output_shape=(dim_x, dim_y), 
         order = 1, 
         mode = 'constant', 
         cval=0, 
@@ -120,28 +120,28 @@ def resize_2dtensor_bilinear(inp):
     )
     return inp_resized
 
-# def resize_2dtensor_bilinear_ct(inp):
-#     # order = 1 (default) for Bilinear interpolation
-#     inp_resized = resize(
-#         inp,
-#         output_shape=(mindim_x, mindim_y), 
-#         order = 0, 
-#         mode = 'constant', 
-#         cval=0, 
-#         anti_aliasing=False,
-#         preserve_range=True,
-#     )
-#     return inp_resized
 
-# def resize_2dtensor_torch_bilinear(inp):
-#     # order = 1 (default) for Bilinear interpolation
-#     inp_tensor = torch.from_numpy(inp)
-#     inp_resized = inp_tensor.Resize(
-#         size=(mindim_x, mindim_y), 
-#         interpolation=InterpolationMode.BILINEAR,
-#     )
+def resize_2dtensor_nearest(inp, dim_x, dim_y):
+    # order = 0 for Nearest neighbour interpolation
+    inp_resized = resize(
+        inp,
+        output_shape=(dim_x, dim_y), 
+        order = 0, 
+        mode = 'constant', 
+        cval=0, 
+        anti_aliasing=False,
+        preserve_range=True,
+    )
 
-#     return inp_resized.numpy()
+    return inp_resized
+
+
+def pt_preprocess(inp):
+    inp[inp<0] = 0
+    max_pt = np.max(inp)
+    inp_scaled = inp/max_pt
+    return inp_scaled
+
 
 def trunc_scale_preprocess_pt(inp, trunc=45):
     inp[inp<0] = 0
@@ -149,18 +149,11 @@ def trunc_scale_preprocess_pt(inp, trunc=45):
     inp_trunc=inp/trunc
     return inp_trunc
 
-# def trunc_scale_preprocess_ct(inp):
-#     # pre-process channel 1 image - CT
-#     inp[inp>1200]=1200
-#     inp = inp-800 
-#     inp[inp<0]=0
-#     inp = inp/400
-#     return inp
 
 def trunc_scale_preprocess_ct(inp):
     inp[inp<-1024] = -1024
-    inp[inp>2000] = 2000
-    inp = (inp + 1024)/(2000 + 1024)
+    inp[inp>1200] = 1200
+    inp = (inp + 1024)/(1200 + 1024)
     return inp
 
 def stack_slices(inp):

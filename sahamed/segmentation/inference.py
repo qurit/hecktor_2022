@@ -48,9 +48,7 @@ inputs_ct = ct_paths
 inputs_pt = pt_paths
 targets = gt_paths
 #%%
-dataset_test = LesionBackgroundDatasetPTCT(inputs_pt,inputs_ct, targets) 
-                                   
-
+dataset_test = LesionBackgroundDatasetPTCT(inputs_pt,inputs_ct, targets)                                    
 dataloader_test = data.DataLoader(dataset=dataset_test, batch_size=1, shuffle=False, pin_memory=True, num_workers=24)
 
 ImageIDs = []

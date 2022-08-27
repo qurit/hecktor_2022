@@ -3,7 +3,7 @@ import os
 # DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 MAIN_DEVICE = 'cuda:0'
 # ALL_DEVICE_IDS = [0,1]
-experiment_code = 'fpnresnet34smp_diceloss'
+experiment_code = 'attentionunet2dsmallmonai_generalizeddiceloss'
 dim_x = 128
 dim_y = 128
 SAVE_MODEL_ROOT = '/data/blobfuse/saved_models_hecktor/segmentation'

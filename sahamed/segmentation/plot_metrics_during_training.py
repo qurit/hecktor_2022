@@ -8,8 +8,8 @@ def plot_training_validation_metrics(trn_metrics, val_metrics):
     fig.patch.set_facecolor('white')
     fig.patch.set_alpha(0.7)
 
-    ax.plot(trn_metrics)
-    ax.plot(val_metrics)
+    ax.plot(trn_metrics, '-o')
+    ax.plot(val_metrics, '-o')
     ax.legend(['Training ' ,'Validation'])
     ax.set_xlabel('Epochs')
     ax.set_title('Training and validation losses')
@@ -18,12 +18,16 @@ def plot_training_validation_metrics(trn_metrics, val_metrics):
 
 
 #%%
-trn = config.traininglogfilename
-val = config.validationlogfilename
 
-val1 = 'validlog_unet_resnet34enc_diceloss.csv'
-val2 = 'validlog_unet_resnet34enc_diceloss_ct500clip.csv'
-trndata = pd.read_csv(val1)
-valdata = pd.read_csv(val2)
-plot_training_validation_metrics(trndata['loss'][10:], valdata['loss'][10:])
+experiment_code = 'fpnresnet34smp_diceloss'
+trainlog_file = 'trainlog_'+ experiment_code + '.csv'
+validlog_file = 'validlog_'+ experiment_code + '.csv'
+# val1 = 'validlog_unet_resnet34enc_diceloss.csv'
+# val2 = 'validlog_unet_resnet34enc_diceloss_ct500clip.csv'
+trainlogdata = pd.read_csv(trainlog_file)
+validlogdata = pd.read_csv(validlog_file)
+plot_training_validation_metrics(trainlogdata['loss'], validlogdata['loss'])
 # %%
+
+
+   
